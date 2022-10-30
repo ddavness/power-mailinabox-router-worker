@@ -1,23 +1,39 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `wrangler dev src/index.ts` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `wrangler publish src/index.ts --name my-worker` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
+import {Router} from "itty-router"
 export interface Env {
-	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-	// MY_KV_NAMESPACE: KVNamespace;
-	//
-	// Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-	// MY_DURABLE_OBJECT: DurableObjectNamespace;
-	//
-	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-	// MY_BUCKET: R2Bucket;
+	// The latest version that is currently available AND known to be stable.
+	// It MAY differ from the latest release.
+	LATEST_VERSION: string
 }
+
+const HOME_URL = "https://github.com/ddavness/power-mailinabox/"
+const TARGET_URL = "https://raw.githubusercontent.com/ddavness/power-mailinabox/VERSION/setup/bootstrap.sh" // Where _ is to be filled in
+
+const router = Router()
+
+function redirect(target: string): Response {
+	return new Response("", {
+		status: 302, // Temporary Redirect, since the value may change over time
+		headers: {
+			"Location": target
+		}
+	})
+}
+
+router.get("/", (_: Env) => {
+	return redirect(HOME_URL)
+})
+
+router.get("/setup.sh", (env: Env) => {
+	return redirect(TARGET_URL.split("_").join(env.LATEST_VERSION))
+})
+
+router.all("*", () => {
+	let neg_response = new Response("Nothing here!\n\nBut you're welcome to check me out at https://power-mailinabox.net", {
+		status: 404
+	})
+
+	return neg_response
+})
 
 export default {
 	async fetch(
@@ -25,6 +41,6 @@ export default {
 		env: Env,
 		ctx: ExecutionContext
 	): Promise<Response> {
-		return new Response("Hello World!");
-	},
+		return router.handle(request, env);
+	}
 };
