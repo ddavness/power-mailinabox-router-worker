@@ -19,12 +19,12 @@ function redirect(target: string): Response {
 	})
 }
 
-router.get("/", (_: Env) => {
+router.get("/", () => {
 	return redirect(HOME_URL)
 })
 
-router.get("/setup.sh", (env: Env) => {
-	return redirect(TARGET_URL.split("_").join(env.LATEST_VERSION))
+router.get("/setup.sh", (_: Request, env: Env) => {
+	return redirect(TARGET_URL.split("VERSION").join(env.LATEST_VERSION))
 })
 
 router.all("*", () => {
